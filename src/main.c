@@ -150,6 +150,7 @@ void main(void)
   cfb_print(display_dev, "Hello", 1, 1);
   cfb_framebuffer_finalize(display_dev);
 
+  printf("hello\r\n");
 
 
   while(1)
@@ -161,11 +162,18 @@ void main(void)
         {
 
           last_scan = now;
+          
           cfb_print(display_dev, "step 1", 1, 16);
           cfb_framebuffer_finalize(display_dev);
+          printf("step 1 ");
+
           scan_adc();
+          
           cfb_print(display_dev, "step 2", 1, 32);
           cfb_framebuffer_finalize(display_dev);
+          
+          printf("step 2 ");
+          
           update_oled();
           blinky();
         }  
@@ -237,14 +245,15 @@ void adc_init(void)
   int ret;
   
   ret = adc_channel_setup_dt(&adc_channel_1);
-
+  printf("adc_init ret %d\r\n",ret);
 
 }
 
 void scan_adc(void)
 {
-  
+    printf("\r\nscan_adc in\r\n");
     ir_val = read_ir_sensor();
+    printf("scan_adc out\r\n");
 
 }
 
@@ -253,9 +262,9 @@ uint16_t read_ir_sensor(void)
 
   int ret;
   
-  
-  ret = adc_read_dt(&adc_channel_1, &sequence);
-
+  adc_sequence_init_dt(&adc_channel_1, &sequence);
+  ret = adc_read(adc_channel_1.dev, &sequence);
+  printf("adc_read_dt %d  sample_bffer %d\r\n",ret,sample_buffer);
 
   if(ret != 0)
     sample_buffer = 0;

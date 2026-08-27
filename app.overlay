@@ -3,6 +3,7 @@
 #include <zephyr/dt-bindings/pwm/pwm.h>
 */
 
+
 /* this version works with the sh1106 1.3" OLED display */
 
 
@@ -109,8 +110,13 @@
 	};
 };
 
+
+
+
 &adc {
     status = "okay";
+	pinctrl-0 = <&adc_default>;
+    pinctrl-names = "default";
     #address-cells = <1>;
     #size-cells = <0>;
 
@@ -118,9 +124,9 @@
     channel@2 {
         reg = <2>;
         zephyr,gain = "ADC_GAIN_1";
-        zephyr,reference = "ADC_REF_EXTERNAL0"; /* 3.3V AREF pin rail */
+        zephyr,reference = "ADC_REF_VDD_1"; /* 3.3V AREF pin rail */
         zephyr,vref-mv = <3300>;
-        zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 10)>;
+        zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 100)>;
         zephyr,resolution = <12>;
         zephyr,oversampling = <6>; /* 2^6 = 64x Hardware oversampling */
         zephyr,input-positive = <2>; /* AIN2 -> PB08 */
@@ -130,9 +136,9 @@
     channel@3 {
         reg = <3>;
         zephyr,gain = "ADC_GAIN_1";
-        zephyr,reference = "ADC_REF_EXTERNAL0"; /* 3.3V AREF pin rail */
+        zephyr,reference = "ADC_REF_VDD_1"; /* 3.3V AREF pin rail */
         zephyr,vref-mv = <3300>;
-        zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 10)>;
+        zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 100)>;
         zephyr,resolution = <12>;
         zephyr,oversampling = <6>; /* 2^6 = 64x Hardware oversampling */
         zephyr,input-positive = <3>; /* AIN3 -> PB09 */
@@ -162,6 +168,13 @@
 		group1 {
 			pinmux = <PA8E_TCC0_WO0>,
 				 <PA9E_TCC0_WO1>;
+		};
+	};
+
+	adc_default: adc_default {
+		group1 {
+			pinmux = <PB8B_ADC_AIN2>,
+				 <PB9B_ADC_AIN3>;
 		};
 	};
 };
