@@ -128,7 +128,7 @@
         zephyr,vref-mv = <3300>;
         zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 100)>;
         zephyr,resolution = <12>;
-        zephyr,oversampling = <6>; /* 2^6 = 64x Hardware oversampling */
+        zephyr,oversampling = <0>; /* 2^6 = 64x Hardware oversampling */
         zephyr,input-positive = <2>; /* AIN2 -> PB08 */
     };
 
@@ -140,7 +140,7 @@
         zephyr,vref-mv = <3300>;
         zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 100)>;
         zephyr,resolution = <12>;
-        zephyr,oversampling = <6>; /* 2^6 = 64x Hardware oversampling */
+        zephyr,oversampling = <0>; /* 2^6 = 64x Hardware oversampling */
         zephyr,input-positive = <3>; /* AIN3 -> PB09 */
     };
 };
