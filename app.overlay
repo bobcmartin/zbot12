@@ -1,0 +1,168 @@
+/*
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+*/
+
+/* this version works with the sh1106 1.3" OLED display */
+
+
+/ {
+	chosen {
+		zephyr,console = &sercom0;
+		zephyr,shell-uart = &sercom0;
+
+		/* Link LVGL to the OLED */
+		zephyr,display = &sh1106;
+		/* zephyr,display = &ssd1306; */
+	};
+
+	aliases {
+		led0 = &user_led;
+		blip0 = &blip_gpio;
+		motorleft = &motor_left;
+		motorright = &motor_right;
+	};
+
+	
+    zephyr,user {
+        /* Map user aliases to the two ADC channels */
+        io-channels = <&adc 2>, <&adc 3>;
+    };
+
+
+
+	leds {
+		compatible = "gpio-leds";
+
+		user_led: led_0 {
+			gpios = <&porta 17 GPIO_ACTIVE_HIGH>;
+			label = "User LED";
+		};
+
+		blip_gpio: custom_gpio_0 {
+			gpios = <&porta 19 GPIO_ACTIVE_HIGH>;
+			label = "Custom GPIO on PA19";
+		};
+	};
+
+	motors {
+		
+
+		compatible = "microchip,pwm-tcc0-basic";
+		status = "okay";
+		
+		motor_left: motor_left {
+			/* PA08 20 kHz */
+			pwms = <&tcc0 0 PWM_USEC(100)>;
+			/* PA15 */
+			dir-gpios = <&porta 15 GPIO_ACTIVE_HIGH>;
+		};
+
+		motor_right: motor_right {
+			/* PA09 - 20 kHz */
+			pwms = <&tcc0 1 PWM_USEC(100)>;
+			/* PA20 */
+			dir-gpios = <&porta 20 GPIO_ACTIVE_HIGH>;
+		};
+	};
+};
+
+&sercom0 {
+	status = "okay";
+	current-speed = <115200>;
+	rxpo = <3>;
+	txpo = <1>;
+
+	pinctrl-0 = <&sercom0_uart_custom>;
+	pinctrl-names = "default";
+};
+
+&sercom3 {
+	status = "okay";
+	compatible = "atmel,sam0-i2c";
+	/* clock-frequency = <I2C_BITRATE_STANDARD>;*/
+	clock-frequency = <400000>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	mpu6050@68 {
+		compatible = "invensense,mpu6050";
+		reg = <0x68>;
+		status = "okay";
+	};
+
+	/* ssd1306: ssd1306@3c */
+	sh1106: ssd1306@3c {
+		compatible = "sinowealth,sh1106";
+		reg = <0x3c>;
+		width = <128>;
+		height = <64>;
+		/* segment-offet = 0 for 0.96", 2 for SSH1106 */
+		segment-offset = <2>;
+		page-offset = <0>;
+		display-offset = <0>;
+		multiplex-ratio = <63>;
+		prechargep = <0x22>;
+		com-invdir;
+		segment-remap;
+		status = "okay";
+	};
+};
+
+&adc {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    /* Channel 0: Sensor 1 on PB08 (AIN2) */
+    channel@2 {
+        reg = <2>;
+        zephyr,gain = "ADC_GAIN_1";
+        zephyr,reference = "ADC_REF_EXTERNAL0"; /* 3.3V AREF pin rail */
+        zephyr,vref-mv = <3300>;
+        zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 10)>;
+        zephyr,resolution = <12>;
+        zephyr,oversampling = <6>; /* 2^6 = 64x Hardware oversampling */
+        zephyr,input-positive = <2>; /* AIN2 -> PB08 */
+    };
+
+    /* Channel 1: Sensor 2 on PB09 (AIN3) */
+    channel@3 {
+        reg = <3>;
+        zephyr,gain = "ADC_GAIN_1";
+        zephyr,reference = "ADC_REF_EXTERNAL0"; /* 3.3V AREF pin rail */
+        zephyr,vref-mv = <3300>;
+        zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 10)>;
+        zephyr,resolution = <12>;
+        zephyr,oversampling = <6>; /* 2^6 = 64x Hardware oversampling */
+        zephyr,input-positive = <3>; /* AIN3 -> PB09 */
+    };
+};
+
+
+
+&tcc0 {
+	compatible = "atmel,sam0-tcc-pwm";
+	status = "okay";
+	prescaler = <8>;
+	#pwm-cells = <2>;
+	pinctrl-0 = <&tcc0_default>;
+	pinctrl-names = "default";
+};
+
+&pinctrl {
+	sercom0_uart_custom: sercom0_uart_custom {
+		group1 {
+			pinmux = <PA11C_SERCOM0_PAD3>,
+				 <PA10C_SERCOM0_PAD2>;
+		};
+	};
+
+	tcc0_default: tcc0_default {
+		group1 {
+			pinmux = <PA8E_TCC0_WO0>,
+				 <PA9E_TCC0_WO1>;
+		};
+	};
+};
+

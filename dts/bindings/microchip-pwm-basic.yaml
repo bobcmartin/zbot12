@@ -1,0 +1,13 @@
+description: pwm motor controller
+
+compatible: "microchip,pwm-tcc0-basic"
+
+child-binding:
+  properties:
+    pwms:
+      type: phandle-array
+      required: true
+
+    dir-gpios:
+      type: phandle-array
+      required: true
