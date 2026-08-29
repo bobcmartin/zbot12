@@ -67,6 +67,10 @@ void adc_init(void);
 void scan_adc(void);
 uint16_t read_ir_sensor(void);
 
+void pwm_test(void);
+
+
+
 
 // all of these global for now
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
@@ -117,6 +121,7 @@ void main(void)
 
   gpio_init();
   pwm_init();
+
   adc_init();
 
   cfb_framebuffer_init(display_dev);
@@ -153,6 +158,9 @@ void main(void)
   printf("hello\r\n");
 
 
+  pwm_test();
+
+
   while(1)
     {
       
@@ -187,6 +195,93 @@ void main(void)
 
   
 } // end main
+
+
+
+void pwm_test(void)
+{
+
+  
+  printf("pwm test 1 - 5s motor right f 25 motor left 0\r\n");
+  
+  set_motor_right(25);
+  set_motor_left(0);
+
+  k_sleep(K_MSEC(5000));
+
+  set_motor_right(0);
+  set_motor_left(0);
+
+  printf("end pwm test 1\r\n");
+
+  printf("pwm test 2 - 5s motor right 0 motor left 25 f \r\n");
+  
+  set_motor_right(0);
+  set_motor_left(-25);
+
+  k_sleep(K_MSEC(5000));
+  
+  set_motor_right(0);
+  set_motor_left(0);
+
+  printf("end test 2\r\n");
+
+  printf("test 3 - foward both wheels\r\n");
+  set_motor_right(35);
+  set_motor_left(-35);
+
+  k_sleep(K_MSEC(5000));
+
+  set_motor_right(0);
+  set_motor_left(0);
+  
+  printf("end pwm test 3\r\n");
+
+
+}
+
+
+#define FWD_SPEED   35
+#define REV_SPEED   35
+
+
+
+void foward(void)
+{
+
+  set_motor_right(FW_SPEED);
+  set_motor_left(-FW_SPEED);
+
+}
+
+void backward(void)
+{
+
+  set_motor_right(-REV_SPEED);
+  set_motor_left(REV_SPEED);
+  
+}
+
+
+void turn_right(void)
+{
+  
+  set_motor_left(-FW_SPEED);
+  set_motor_right(0);
+  k_sleep(K_MSEC(500));
+
+}
+
+
+void turn_left(void)
+{
+  
+  set_motor_left(0);
+  set_motor_right(FW_SPEED);
+  k_sleep(K_MSEC(500));
+
+}
+
 
 #define ROAM_START          1
 #define ROAM_FORWARD        2
@@ -362,14 +457,19 @@ void set_oled_font(void)
 void pwm_init(void) {
   // Initialize PWMs
   if (!pwm_is_ready_dt(&pwm_l) || !pwm_is_ready_dt(&pwm_r)) {
-
+    printf("--> pwm init fail\r\n");
     return;
   }
 
   // Initialize Directions
   gpio_pin_configure_dt(&dir_l, GPIO_OUTPUT_INACTIVE);
   gpio_pin_configure_dt(&dir_r, GPIO_OUTPUT_INACTIVE);
+
+  printf("--> pwm init pass\r\n");
+
+
 }
+
 
 void set_motor_left(int power) {
 
@@ -396,6 +496,8 @@ void set_motor_left(int power) {
     pwm_set_pulse_dt(&pwm_l, pulse);
   }
 }
+
+
 
 void set_motor_right(int power) {
   if (power > 100)
