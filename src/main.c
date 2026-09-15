@@ -40,7 +40,7 @@ char oled_string[16];
 uint32_t scan_count;
 double imu_angle;
 double bat_volt = 6.2;
-int16_t ir_val;
+int16_t ir_val,bat_lvl;
 
 
 void gpio_init(void);
@@ -55,6 +55,8 @@ void roam(void);
 void adc_init(void);
 void scan_adc(void);
 uint16_t read_ir_sensor(void);
+uint16_t read_bat_voltage(void);
+
 
 void pwm_test(void);
 
@@ -161,7 +163,7 @@ void main(void)
         
           // scan_adc();
           roam();
-
+          bat_lvl = read_bat_voltage();
           update_oled();
           blinky();
         }  
@@ -335,7 +337,24 @@ void adc_init(void)
   int ret;
   
   ret = adc_channel_setup_dt(&adc_channel_1);
-  printf("adc_init ret %d\r\n",ret);
+  if(ret != 0)
+  {
+  
+    printf("adc_init fail %d\r\n",ret);
+    while(1);
+  }
+  printf("chan 1 %d\r\n",ret);
+  
+  ret = adc_channel_setup_dt(&adc_channel_2);
+  if(ret != 0)
+  {
+  
+    printf("adc_init fail %d\r\n",ret);
+    while(1);
+  }
+
+  printf("chan 2 %d\r\n",ret);
+  
 
 }
 
@@ -353,7 +372,7 @@ uint16_t read_ir_sensor(void)
   
   adc_sequence_init_dt(&adc_channel_1, &sequence);
   ret = adc_read(adc_channel_1.dev, &sequence);
-  printf("adc_read_dt %d  sample_buffer %d\r\n",ret,sample_buffer);
+  printf("sts ch 1 %d  sample_buffer %d\r\n",ret,sample_buffer);
 
   if(ret != 0)
     printf("adc read error\r\n");
@@ -361,6 +380,20 @@ uint16_t read_ir_sensor(void)
   return(sample_buffer);
 
 }
+
+uint16_t read_bat_voltage(void)
+{
+
+  int ret;
+  
+  adc_sequence_init_dt(&adc_channel_2, &sequence);
+  ret = adc_read(adc_channel_2.dev, &sequence);
+  printf("sts ch 2 %d  sample_buffer %d\r\n",ret,sample_buffer);
+
+
+}
+
+
 
 void blinky(void)
 {
