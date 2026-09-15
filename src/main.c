@@ -24,23 +24,12 @@
 #include <zephyr/display/cfb.h>
 #include <zephyr/drivers/display.h>
 
-#define RAD2DEG 57.29577f
-double accel_fx, accel_fy, accel_fz;
-double gyro_fx, gyro_fy, gyro_fz;
 
-struct sensor_value accel_data[3];
-struct sensor_value gyro_data[3];
 
 uint64_t  now,last_scan,last_update;
 
 uint64_t  UPDATE_INTYERVAL = 1000; // display update rate
 uint64_t  SCAN_INTERVAL = 500;   // 250ms  IMU scan update
-
-
-// PID loop gains
-float Kp = 12.0;
-float Ki = 0.5;
-float Kd = 2.5;
 
 // global PID loop data
 float pid_output;
@@ -158,7 +147,7 @@ void main(void)
   printf("hello\r\n");
 
 
-  pwm_test();
+  // pwm_test();
 
 
   while(1)
@@ -170,19 +159,11 @@ void main(void)
         {
           scan_count++;
           last_scan = now;
-          /*
-          cfb_print(display_dev, "step 1", 1, 16);
-          cfb_framebuffer_finalize(display_dev);
-          printf("step 1 ");
-          */
-          scan_adc();
-          /*
-          cfb_print(display_dev, "step 2", 1, 32);
-          cfb_framebuffer_finalize(display_dev);
-          printf("step 2 ");
-          */
+        
+          // scan_adc();
+          roam();
 
-          update_oled();
+          // update_oled();
           blinky();
         }  
 
@@ -244,13 +225,19 @@ void pwm_test(void)
 #define FWD_SPEED   35
 #define REV_SPEED   35
 
+void stop(void)
+{
 
+  set_motor_right(0);
+  set_motor_left(0);
+
+}
 
 void foward(void)
 {
 
-  set_motor_right(FW_SPEED);
-  set_motor_left(-FW_SPEED);
+  set_motor_right(FWD_SPEED);
+  set_motor_left(-FWD_SPEED);
 
 }
 
@@ -266,7 +253,7 @@ void backward(void)
 void turn_right(void)
 {
   
-  set_motor_left(-FW_SPEED);
+  set_motor_left(-FWD_SPEED);
   set_motor_right(0);
   k_sleep(K_MSEC(500));
 
@@ -277,7 +264,7 @@ void turn_left(void)
 {
   
   set_motor_left(0);
-  set_motor_right(FW_SPEED);
+  set_motor_right(FWD_SPEED);
   k_sleep(K_MSEC(500));
 
 }
@@ -291,7 +278,10 @@ void turn_left(void)
 
 
 uint8_t roam_state = ROAM_START;
-#define PROX_LIMIT  200     // prox detect adc count for 60mm target distance
+// prox detect adc count for 60mm target distance
+// keep in ADC counts, no need to convert to millivolts since everything is relative
+#define PROX_LIMIT  2000     
+
 
 void roam(void)
 {
@@ -301,11 +291,11 @@ void roam(void)
 
         case ROAM_START:    // check forward path, go into RECOVER mode if needed
           if(read_ir_sensor() > PROX_LIMIT)
-            roam_state = ROAM_RECOVER;
+            roam_state = ROAM_WALL_DETECT;
           else 
             {
               // start moving forward
-              
+              foward();
               roam_state = ROAM_FORWARD;
             }
 
@@ -314,20 +304,31 @@ void roam(void)
         
 
       case ROAM_FORWARD:    // move forward intil we detetc something
-
+            if(read_ir_sensor() > PROX_LIMIT)
+              {
+                
+                stop();
+                roam_state = ROAM_WALL_DETECT;
+              }
+     
         break;
 
 
 
       case ROAM_WALL_DETECT:
-
+         backward();
+         k_sleep(K_MSEC(1000));
+         stop();
+         turn_left();
+         k_sleep(K_MSEC(500));    
+         stop();
+         k_sleep(K_MSEC(500));    
+         foward();
+         roam_state = ROAM_FORWARD;
          break;
 
-
-      case ROAM_RECOVER:
-              break;
-
-
+      default:  // should vever get here
+          stop();
 
     } // end switch (roam_state)
 
@@ -384,9 +385,8 @@ void blinky(void)
 void serial_debug(void)
 {
    
-      printf("scan %05u Accel: %5.3f %5.3f %5.3f m/s^2\n", scan_count, accel_fx,
-            accel_fy, accel_fz);
-      printf("IMU angle %5.3f\r\n", imu_angle);
+      return;
+
    
 }
 
