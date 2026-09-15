@@ -144,8 +144,7 @@ void main(void)
   cfb_print(display_dev, "Hello", 1, 1);
   cfb_framebuffer_finalize(display_dev);
 
-  printf("hello\r\n");
-
+  // printf("hello\r\n");
 
   // pwm_test();
 
@@ -163,17 +162,12 @@ void main(void)
           // scan_adc();
           roam();
 
-          // update_oled();
+          update_oled();
           blinky();
         }  
 
 
     }  // end while 1
-  
-  
-  // main task
-  // roam();
-
   
 } // end main
 
@@ -363,6 +357,7 @@ uint16_t read_ir_sensor(void)
 
   if(ret != 0)
     printf("adc read error\r\n");
+  ir_val = sample_buffer;   // hand off to global
   return(sample_buffer);
 
 }
@@ -415,8 +410,31 @@ void update_oled(void) {
     
   sprintf(oled_string, "adc %d", ir_val);
   cfb_print(display_dev, oled_string, 1, 16);
+
+  if(roam_state == ROAM_START)
+    {
+      
+      sprintf(oled_string, "START");
+      cfb_print(display_dev, oled_string, 1, 32);
+
+    }
+    else if (roam_state == ROAM_FORWARD)
+    {
+      
+      sprintf(oled_string, "FORWARD");
+      cfb_print(display_dev, oled_string, 1, 32);
+
+    }
+
+    else if(roam_state == ROAM_WALL_DETECT)
+    {
+      sprintf(oled_string, "WALL !");
+      cfb_print(display_dev, oled_string, 1, 32);
+
+    }
+
   
-  // display data
+  // update frame buffer
   cfb_framebuffer_finalize(display_dev);
 
 }
