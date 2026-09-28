@@ -370,12 +370,6 @@ void adc_init(void)
 
 }
 
-void scan_adc(void)
-{
-    
-    ir_val = read_ir_sensor();
-
-}
 
 uint16_t read_ir_sensor(void)
 {
