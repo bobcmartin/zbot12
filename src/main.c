@@ -112,7 +112,7 @@ void main(void)
 
   gpio_init();
   pwm_init();
-
+  stop();
   adc_init();
 
   cfb_framebuffer_init(display_dev);
@@ -276,7 +276,7 @@ void turn_left(void)
 uint8_t roam_state = ROAM_START;
 // prox detect adc count for 60mm target distance
 // keep in ADC counts, no need to convert to millivolts since everything is relative
-#define PROX_LIMIT  2000     
+#define PROX_LIMIT  1800    
 
 
 void roam(void)
@@ -313,12 +313,13 @@ void roam(void)
 
       case ROAM_WALL_DETECT:
          backward();
-         k_sleep(K_MSEC(1000));
+         k_sleep(K_MSEC(500));
          stop();
+         k_sleep(K_MSEC(100));
          turn_left();
          k_sleep(K_MSEC(500));    
          stop();
-         k_sleep(K_MSEC(500));    
+         k_sleep(K_MSEC(100));    
          foward();
          roam_state = ROAM_FORWARD;
          break;
@@ -370,7 +371,7 @@ uint16_t read_ir_sensor(void)
 
   int ret;
   
-  adc_sequence_init_dt(&adc_channel_1, &sequence);
+  adc_sequence_init_dt(&adc_channel_2, &sequence);
   ret = adc_read(adc_channel_1.dev, &sequence);
   printf("sts ch 1 %d  sample_buffer %d\r\n",ret,sample_buffer);
 
