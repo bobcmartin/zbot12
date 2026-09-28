@@ -29,7 +29,7 @@
 uint64_t  now,last_scan,last_update;
 
 uint64_t  UPDATE_INTYERVAL = 1000; // display update rate
-uint64_t  SCAN_INTERVAL = 500;   // 250ms  IMU scan update
+uint64_t  SCAN_INTERVAL = 500;   // 500ms  IMU scan update
 
 // global PID loop data
 float pid_output;
@@ -52,10 +52,18 @@ void pwm_init(void);
 void set_motor_left(int power);
 void set_motor_right(int power);
 void roam(void);
+void stop(void);
+void foward(void);
+void backward(void);
+void turn_right(void);
+void turn_left(void);
+
 void adc_init(void);
 void scan_adc(void);
 uint16_t read_ir_sensor(void);
 uint16_t read_bat_voltage(void);
+
+
 
 
 void pwm_test(void);
@@ -86,24 +94,24 @@ static const struct gpio_dt_spec dir_r =
 static const struct adc_dt_spec adc_channel_1 = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 static const struct adc_dt_spec adc_channel_2 = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 1);
 
-static uint16_t sample_buffer;
+static int16_t sample_buffer1;
+static int16_t sample_buffer2;
 
-static struct adc_sequence sequence = {
-	.buffer = &sample_buffer,
-	.buffer_size = sizeof(sample_buffer),
+static struct adc_sequence sequence_1 = {
+	.buffer = &sample_buffer1,
+	.buffer_size = sizeof(sample_buffer1),
 };
+
+static struct adc_sequence sequence_2 = {
+	.buffer = &sample_buffer2,
+	.buffer_size = sizeof(sample_buffer2),
+};
+
 
 
 
 static inline void blip_on(void) {gpio_pin_set_dt(&blip, 1);}
 static inline void blip_off(void) {gpio_pin_set_dt(&blip, 0);}
-
-
-#define NULL_TASK 0
-#define BALANCE_WAIT 1
-#define BALANCE_ACTIVE 2
-
-
 
 void main(void) 
 {
@@ -163,7 +171,7 @@ void main(void)
         
           // scan_adc();
           roam();
-          bat_lvl = read_bat_voltage();
+          // bat_lvl = read_bat_voltage();
           update_oled();
           blinky();
         }  
@@ -236,6 +244,7 @@ void foward(void)
   set_motor_left(-FWD_SPEED);
 
 }
+
 
 void backward(void)
 {
@@ -317,7 +326,7 @@ void roam(void)
          stop();
          k_sleep(K_MSEC(100));
          turn_left();
-         k_sleep(K_MSEC(500));    
+         // k_sleep(K_MSEC(500));    
          stop();
          k_sleep(K_MSEC(100));    
          foward();
@@ -345,7 +354,9 @@ void adc_init(void)
     while(1);
   }
   printf("chan 1 %d\r\n",ret);
-  
+  adc_sequence_init_dt(&adc_channel_1, &sequence_1);
+
+
   ret = adc_channel_setup_dt(&adc_channel_2);
   if(ret != 0)
   {
@@ -355,7 +366,7 @@ void adc_init(void)
   }
 
   printf("chan 2 %d\r\n",ret);
-  
+  adc_sequence_init_dt(&adc_channel_2, &sequence_2);
 
 }
 
@@ -371,14 +382,16 @@ uint16_t read_ir_sensor(void)
 
   int ret;
   
-  adc_sequence_init_dt(&adc_channel_2, &sequence);
-  ret = adc_read(adc_channel_1.dev, &sequence);
-  printf("sts ch 1 %d  sample_buffer %d\r\n",ret,sample_buffer);
+  // adc_channel_setup_dt(&adc_channel_1);
+  // adc_sequence_init_dt(&adc_channel_1, &sequence_1);
+  ret = adc_read(adc_channel_1.dev, &sequence_1);
+ 
+  printf("sts ch 1 %d  sample_buffer %d\r\n",ret,sample_buffer1);
 
   if(ret != 0)
     printf("adc read error\r\n");
-  ir_val = sample_buffer;   // hand off to global
-  return(sample_buffer);
+  ir_val = sample_buffer1;   // hand off to global
+  return(sample_buffer1);
 
 }
 
@@ -387,9 +400,10 @@ uint16_t read_bat_voltage(void)
 
   int ret;
   
-  adc_sequence_init_dt(&adc_channel_2, &sequence);
-  ret = adc_read(adc_channel_2.dev, &sequence);
-  printf("sts ch 2 %d  sample_buffer %d\r\n",ret,sample_buffer);
+  adc_sequence_init_dt(&adc_channel_2, &sequence_2);
+  ret = adc_read(adc_channel_2.dev, &sequence_2);
+  printf("sts ch 2 %d  sample_buffer %d\r\n",ret,sample_buffer2);
+  return(sample_buffer2);
 
 
 }
