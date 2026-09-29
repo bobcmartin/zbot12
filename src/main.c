@@ -29,7 +29,7 @@
 uint64_t  now,last_scan,last_update;
 
 uint64_t  UPDATE_INTYERVAL = 1000; // display update rate
-uint64_t  SCAN_INTERVAL = 500;   // 500ms  IMU scan update
+uint64_t  SCAN_INTERVAL = 2000;   // 500ms  IMU scan update
 
 // global PID loop data
 float pid_output;
@@ -168,11 +168,12 @@ void main(void)
         {
           scan_count++;
           last_scan = now;
-        
-          // scan_adc();
-          roam();
+          printf("scan:%05u: \r\n",scan_count);
+
+          scan_adc();
+          // roam();
           // bat_lvl = read_bat_voltage();
-          update_oled();
+          // update_oled();
           blinky();
         }  
 
@@ -370,14 +371,32 @@ void adc_init(void)
 
 }
 
+void scan_adc(void)
+{
+  int ret1,ret2,ret3;
+  
+  ret1 = adc_channel_setup_dt(&adc_channel_1);
+  ret2 = adc_sequence_init_dt(&adc_channel_1, &sequence_1);
+  ret3 = adc_read(adc_channel_1.dev, &sequence_1);
+
+  printf("sts1 %d sts2 %d sts3 %d   sample_buffer 1 %d\r\n",ret1,ret2,ret3,sample_buffer1);
+
+  ret1 = adc_channel_setup_dt(&adc_channel_2);
+  ret2 = adc_sequence_init_dt(&adc_channel_1, &sequence_2);
+  ret3 = adc_read(adc_channel_1.dev, &sequence_2);
+  printf("sts1 %d sts2 %d sts3 %d sample_buffer 2 %d\r\n",ret1,ret2,ret3,sample_buffer2);
+  printf("\r\n");
+}
+
+
 
 uint16_t read_ir_sensor(void)
 {
 
   int ret;
   
-  // adc_channel_setup_dt(&adc_channel_1);
-  // adc_sequence_init_dt(&adc_channel_1, &sequence_1);
+  adc_channel_setup_dt(&adc_channel_1);
+  adc_sequence_init_dt(&adc_channel_1, &sequence_1);
   ret = adc_read(adc_channel_1.dev, &sequence_1);
  
   printf("sts ch 1 %d  sample_buffer %d\r\n",ret,sample_buffer1);
